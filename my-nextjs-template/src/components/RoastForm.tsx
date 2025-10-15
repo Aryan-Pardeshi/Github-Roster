@@ -1,17 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import { ApiService, GitHubProfile } from '@/services/api';
 
 type RoastLevel = 'mild' | 'medium' | 'savage';
-
-interface RoastOptions {
-  topLanguage: boolean;
-  repoCount: boolean;
-  followers: boolean;
-  following: boolean;
-  commitFrequency: boolean;
-  repoDescriptions: boolean;
-}
 
 interface RoastResult {
   success: boolean;
@@ -19,6 +11,7 @@ interface RoastResult {
   error?: string;
   username?: string;
   level?: string;
+  profile?: GitHubProfile;
 }
 
 export default function RoastForm() {
@@ -26,14 +19,6 @@ export default function RoastForm() {
   const [roastLevel, setRoastLevel] = useState<RoastLevel>('medium');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<RoastResult | null>(null);
-  const [options, setOptions] = useState<RoastOptions>({
-    topLanguage: true,
-    repoCount: true,
-    followers: false,
-    following: false,
-    commitFrequency: false,
-    repoDescriptions: false,
-  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,26 +26,36 @@ export default function RoastForm() {
     setResult(null);
 
     try {
-      // Simulate API call - replace with actual API endpoint later
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock roast responses
-      const roasts = {
-        mild: `Hey @${username}, your GitHub profile is... interesting. Like a participation trophy, but for code. At least you tried! 😊`,
-        medium: `@${username}, I see your commit history is as consistent as my gym attendance. Your repos are like a museum of abandoned dreams. 😏`,
-        savage: `@${username}, your GitHub profile is a masterclass in mediocrity. Your code quality and commit frequency suggest you treat programming like a hobby you picked up last Tuesday. 💀`
+      // Map roast level to temperature
+      const temperatureMap = {
+        mild: 0.7,
+        medium: 0.85,
+        savage: 1.0,
       };
 
-      setResult({
-        success: true,
-        roast: roasts[roastLevel],
-        username: username,
-        level: roastLevel,
-      });
+      const temperature = temperatureMap[roastLevel];
+
+      // Call your trained ML model via Flask backend
+      const response = await ApiService.generateRoast(username, temperature);
+
+      if (response.success && response.roast) {
+        setResult({
+          success: true,
+          roast: response.roast,
+          username: username,
+          level: roastLevel,
+          profile: response.profile,
+        });
+      } else {
+        setResult({
+          success: false,
+          error: response.error || 'Failed to generate roast',
+        });
+      }
     } catch (error) {
       setResult({
         success: false,
-        error: 'Failed to generate roast. Even the AI gave up.',
+        error: 'Failed to connect to server. Make sure the Flask backend is running.',
       });
     } finally {
       setLoading(false);
@@ -151,68 +146,38 @@ export default function RoastForm() {
             </div>
           </div>
 
-          {/* Analysis Options */}
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">
-              What to Analyze
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <label className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                <input 
-                  type="checkbox" 
-                  checked={options.topLanguage}
-                  onChange={(e) => setOptions({...options, topLanguage: e.target.checked})}
-                  className="w-5 h-5 text-red-600 rounded focus:ring-red-500" 
-                />
-                <span className="text-sm text-slate-700 dark:text-slate-300">Top Language</span>
-              </label>
-              <label className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                <input 
-                  type="checkbox" 
-                  checked={options.repoCount}
-                  onChange={(e) => setOptions({...options, repoCount: e.target.checked})}
-                  className="w-5 h-5 text-red-600 rounded focus:ring-red-500" 
-                />
-                <span className="text-sm text-slate-700 dark:text-slate-300">Repository Count</span>
-              </label>
-              <label className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                <input 
-                  type="checkbox" 
-                  checked={options.followers}
-                  onChange={(e) => setOptions({...options, followers: e.target.checked})}
-                  className="w-5 h-5 text-red-600 rounded focus:ring-red-500" 
-                />
-                <span className="text-sm text-slate-700 dark:text-slate-300">Followers</span>
-              </label>
-              <label className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                <input 
-                  type="checkbox" 
-                  checked={options.following}
-                  onChange={(e) => setOptions({...options, following: e.target.checked})}
-                  className="w-5 h-5 text-red-600 rounded focus:ring-red-500" 
-                />
-                <span className="text-sm text-slate-700 dark:text-slate-300">Following</span>
-              </label>
-              <label className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                <input 
-                  type="checkbox" 
-                  checked={options.commitFrequency}
-                  onChange={(e) => setOptions({...options, commitFrequency: e.target.checked})}
-                  className="w-5 h-5 text-red-600 rounded focus:ring-red-500" 
-                />
-                <span className="text-sm text-slate-700 dark:text-slate-300">Commit Frequency</span>
-              </label>
-              <label className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                <input 
-                  type="checkbox" 
-                  checked={options.repoDescriptions}
-                  onChange={(e) => setOptions({...options, repoDescriptions: e.target.checked})}
-                  className="w-5 h-5 text-red-600 rounded focus:ring-red-500" 
-                />
-                <span className="text-sm text-slate-700 dark:text-slate-300">Repo Descriptions</span>
-              </label>
+          {/* Profile Stats Preview (shown after generating) */}
+          {result?.profile && (
+            <div className="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-xl">
+              <div className="flex items-center gap-4">
+                {result.profile.avatar_url && (
+                  <img 
+                    src={result.profile.avatar_url} 
+                    alt={result.profile.username}
+                    className="w-16 h-16 rounded-full border-2 border-slate-300 dark:border-slate-600"
+                  />
+                )}
+                <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                  <div>
+                    <div className="text-slate-500 dark:text-slate-400">⭐ Stars</div>
+                    <div className="font-bold text-slate-900 dark:text-white">{result.profile.total_stars}</div>
+                  </div>
+                  <div>
+                    <div className="text-slate-500 dark:text-slate-400">👥 Followers</div>
+                    <div className="font-bold text-slate-900 dark:text-white">{result.profile.followers}</div>
+                  </div>
+                  <div>
+                    <div className="text-slate-500 dark:text-slate-400">📦 Repos</div>
+                    <div className="font-bold text-slate-900 dark:text-white">{result.profile.num_repos}</div>
+                  </div>
+                  <div>
+                    <div className="text-slate-500 dark:text-slate-400">💻 Language</div>
+                    <div className="font-bold text-slate-900 dark:text-white">{result.profile.top_language}</div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Submit Button */}
           <button
