@@ -1,4 +1,4 @@
-import google.generativeai as genai
+# import google.generativeai as genai
 import json
 import os
 
@@ -25,10 +25,10 @@ g = Github(auth=Auth.Token(GITHUB_TOKEN))
 
 # --- GOOGLE AI (GEMINI) SETUP ---
 # Securely load the Google API key from environment variables
-GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY') or os.getenv('GEMINI_API_KEY')
-if not GOOGLE_API_KEY:
-    raise ValueError("Google API key not found. Please set it in your environment or a .env file.")
-genai.configure(api_key=GOOGLE_API_KEY)
+# GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY') or os.getenv('GEMINI_API_KEY')
+# if not GOOGLE_API_KEY:
+#     raise ValueError("Google API key not found. Please set it in your environment or a .env file.")
+# genai.configure(api_key=GOOGLE_API_KEY)
 
 
 ## Part 1: GitHub Data Fetching
@@ -95,29 +95,29 @@ def analyze_data_for_roast(data: dict) -> list[str]:
     return facts
 
 
-def generate_roast_with_gemini(facts: list[str]) -> str:
-    """Uses the Google AI API (Gemini) to generate a roast based on facts."""
-    if not facts:
-        return "This profile is so bland, there's nothing to even roast."
+# def generate_roast_with_gemini(facts: list[str]) -> str:
+#     """Uses the Google AI API (Gemini) to generate a roast based on facts."""
+#     if not facts:
+#         return "This profile is so bland, there's nothing to even roast."
 
-    model = genai.GenerativeModel('models/gemini-flash-lite-latest')
+#     model = genai.GenerativeModel('models/gemini-flash-lite-latest')
     
-    # IMPROVEMENT: A much better prompt that defines a persona for the AI
-    fact_sheet = "\n- ".join(facts)
-    prompt = f"""
-Your persona is RoastBot, a witty and sarcastic AI comedian. Your job is to deliver a short, sharp, and funny roast of a GitHub user based on the following facts. Be a little edgy but not genuinely mean. Keep it to a single paragraph.
+#     # IMPROVEMENT: A much better prompt that defines a persona for the AI
+#     fact_sheet = "\n- ".join(facts)
+#     prompt = f"""
+# Your persona is RoastBot, a witty and sarcastic AI comedian. Your job is to deliver a short, sharp, and funny roast of a GitHub user based on the following facts. Be a little edgy but not genuinely mean. Keep it to a single paragraph.
 
-Here's the fact sheet for your next target:
-- {fact_sheet}
+# Here's the fact sheet for your next target:
+# - {fact_sheet}
 
-RoastBot's take:
-"""
+# RoastBot's take:
+# """
 
-    try:
-        response = model.generate_content(prompt)
-        return response.text.strip()
-    except Exception as e:
-        return f"The AI is taking a break... Error: {e}"
+#     try:
+#         response = model.generate_content(prompt)
+#         return response.text.strip()
+#     except Exception as e:
+#         return f"The AI is taking a break... Error: {e}"
 
 
 # --- Main Workflow ---
@@ -143,4 +143,5 @@ if __name__ == "__main__":
             print(final_roast)
 
     except (ValueError, KeyboardInterrupt) as e:
+
         print(f"\nExiting program. {e}")
